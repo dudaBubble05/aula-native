@@ -1,6 +1,8 @@
-import { StyleSheet, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, Button, TextInput, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { Text, View } from '@/components/Themed';
+import PersonRequests from '@/service/api/PersonRequests';
+
 
 export default function TabOneScreen() {
   const [nome, setNome] = useState('');
@@ -8,65 +10,82 @@ export default function TabOneScreen() {
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  const handleEnviar = () => {
-    Alert.alert(
-      'Dados do Formulário',
-      `Nome: ${nome}\nSobrenome: ${sobrenome}\nCPF: ${cpf}\nTelefone: ${telefone}\nE-mail: ${email}`
-    );
-  };
+  async function enviarFormulario(
+    person: {
+      nome: string;
+      sobrenome: string;
+      cpf: string;
+      telefone: string;
+      email: string
+    }
+  ) {
+    setCarregando(true); // inicia o spinner
+    try {
+      const respostaPerson = await PersonRequests.postPerson(person);
+
+      if(respostaPerson.ok) {
+        console.log("Pessoa cadastrado com sucesso.");
+        alert("Pessoa cadastrada com sucesso");
+      } else {
+        console.log("Erro ao cadastrar pessoa");
+        alert("Erro ao cadastrar pessoa");
+      }
+    } catch (error) {
+      console.log(`Erro na requisição. ${error}`);
+      alert('Erro inesperado.');
+    } finally {
+      setCarregando(false); // finaliza o spinner
+    }
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Formulário</Text>
+      <Text style={styles.title}>Cadastro de Pessoa</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      
       <TextInput
-        placeholder="Nome"
+        placeholder='Insira o nome'
         value={nome}
         onChangeText={setNome}
-        style={styles.input}
-        inputMode="text"
       />
-      
       <TextInput
-        placeholder="Sobrenome"
+        placeholder='Insira o sobrenome'
         value={sobrenome}
         onChangeText={setSobrenome}
-        style={styles.input}
-        inputMode="text"
       />
-      
       <TextInput
-        placeholder="CPF"
+        placeholder='Insira o CPF'
         value={cpf}
         onChangeText={setCpf}
-        style={styles.input}
-        inputMode="numeric"
-        maxLength={11}
+        inputMode='numeric'
       />
-      
       <TextInput
-        placeholder="Telefone"
+        placeholder='Insira o telefone'
         value={telefone}
         onChangeText={setTelefone}
-        style={styles.input}
-        inputMode="tel"
+        inputMode='numeric'
       />
-      
       <TextInput
-        placeholder="E-mail"
+        placeholder='Insira o e-mail'
         value={email}
         onChangeText={setEmail}
-        style={styles.input}
-        inputMode="email"
-        autoCapitalize="none"
+        inputMode='email'
       />
-      
       <Button
-        title="ENVIAR"
-        onPress={handleEnviar}
+        title='ENVIAR'
+        onPress={() => enviarFormulario({
+          nome: nome,
+          sobrenome: sobrenome,
+          cpf: cpf,
+          telefone: telefone,
+          email: email
+        })}
       />
+
+      {carregando && (
+        <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 20 }} />
+      )}
     </View>
   );
 }
@@ -76,25 +95,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
   },
   separator: {
-    marginVertical: 20,
+    marginVertical: 30,
     height: 1,
     width: '80%',
-  },
-  input: {
-    height: 40,
-    width: '100%',
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-    borderRadius: 5,
   },
 });
